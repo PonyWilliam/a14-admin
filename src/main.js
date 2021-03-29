@@ -4,9 +4,11 @@ import i18n from './i18n'
 import App from './App'
 // 核心插件
 import d2Admin from '@/plugin/d2admin'
+// umy-ui
+import UmyUi from 'umy-ui'
+import 'umy-ui/lib/theme-chalk/index.css';
 // store
 import store from '@/store/index'
-
 // 菜单和路由设置
 import router from './router'
 import { menuHeader, menuAside } from '@/menu'
@@ -14,6 +16,7 @@ import { frameInRoutes } from '@/router/routes'
 
 // 核心插件
 Vue.use(d2Admin)
+Vue.use(UmyUi)
 
 new Vue({
   router,

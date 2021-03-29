@@ -16,7 +16,7 @@
         flex="dir:top main:justify cross:stretch box:justify">
         <div class="page-login--content-header">
           <p class="page-login--content-header-motto">
-            时间是一切财富中最宝贵的财富
+            RFIDeX设备管理系统
           </p>
         </div>
         <div
@@ -47,16 +47,6 @@
                     v-model="formLogin.password"
                     placeholder="密码">
                     <i slot="prepend" class="fa fa-keyboard-o"></i>
-                  </el-input>
-                </el-form-item>
-                <el-form-item prop="code">
-                  <el-input
-                    type="text"
-                    v-model="formLogin.code"
-                    placeholder="验证码">
-                    <template slot="append">
-                      <img class="login-code" src="./image/login-code.png">
-                    </template>
                   </el-input>
                 </el-form-item>
                 <el-button
@@ -123,6 +113,7 @@
 
 <script>
 import dayjs from 'dayjs'
+import config from '@/libs/config.js'
 import { mapActions } from 'vuex'
 import localeMixin from '@/locales/mixin.js'
 export default {
@@ -140,23 +131,12 @@ export default {
           name: 'Admin',
           username: 'admin',
           password: 'admin'
-        },
-        {
-          name: 'Editor',
-          username: 'editor',
-          password: 'editor'
-        },
-        {
-          name: 'User1',
-          username: 'user1',
-          password: 'user1'
         }
       ],
       // 表单
       formLogin: {
         username: 'admin',
-        password: 'admin',
-        code: 'v9am'
+        password: 'admin'
       },
       // 表单校验
       rules: {
@@ -174,13 +154,6 @@ export default {
             trigger: 'blur'
           }
         ],
-        code: [
-          {
-            required: true,
-            message: '请输入验证码',
-            trigger: 'blur'
-          }
-        ]
       }
     }
   },
@@ -218,14 +191,46 @@ export default {
           // 登录
           // 注意 这里的演示没有传验证码
           // 具体需要传递的数据请自行修改代码
-          this.login({
-            username: this.formLogin.username,
-            password: this.formLogin.password
+          if(this.formLogin.username != "admin"){
+            this.$message.error('仅支持admin账号登陆')
+            return
+          }
+          let formData = new FormData();
+          
+          formData.append("username",this.formLogin.username)
+          formData.append("password",this.formLogin.password)
+
+          const loading = this.$loading({
+            lock: true,
+            text: 'Loading',
+            background: 'rgba(255,255,255,.7)'
           })
-            .then(() => {
-              // 重定向对象不存在则返回顶层路径
-              this.$router.replace(this.$route.query.redirect || '/')
-            })
+          fetch(config.url + config.work + "login",{
+            "method":"POST",
+            "body":formData,
+            headers:{
+
+            }
+          }).then(data=>data.json()).catch(err=>{
+            console.log(err)
+            this.$message.error('登陆时遇到问题，请稍后重试')
+            loading.close()
+          }).then(
+            res=>{
+              console.log(res)
+              if(res.token){
+                localStorage.setItem('token',res.token)
+                loading.close()
+                this.$message.success('登陆成功，即将跳转到首页')
+                setTimeout(()=>{
+                  this.$router.push('/index')
+                },2000)
+              }else{
+                loading.close()
+                this.$message.error('登陆密码错误，请重试')
+              }
+            }
+          )
         } else {
           // 登录表单校验失败
           this.$message.error('表单校验失败，请检查')
