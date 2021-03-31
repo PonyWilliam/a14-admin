@@ -13,10 +13,10 @@
         <el-form-item label="姓名" :label-width="formLabelWidth" prop="name">
           <el-input v-model="form.name" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="工号" :label-width="formLabelWidth" prop="nums">
+        <el-form-item sortable label="工号" :label-width="formLabelWidth" prop="nums">
           <el-input type="number" v-model="form.nums" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="等级" :label-width="formLabelWidth" prop="level">
+        <el-form-item sortable label="等级" :label-width="formLabelWidth" prop="level">
           <el-input type="number" v-model="form.level" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="性别" :label-width="formLabelWidth" prop="sex">
@@ -213,7 +213,7 @@
       handleClose(done) {
         this.$confirm('确认关闭吗')
           .then(_ => {
-            
+
             done();
           })
           .catch(_ => {});
@@ -260,7 +260,7 @@
             return
           }
         })
-        
+
       },
       UpdateData(){
         common.GetWorkData("workers").then(res=>res.json()).catch(err=>console.log(err)).then(data=>{
@@ -297,7 +297,7 @@
           },1500)
           return
         }).then(data=>{
-          
+
           if(data.code != 200){
             this.$message.error(data.msg)
             setTimeout(()=>{

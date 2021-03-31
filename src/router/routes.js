@@ -26,7 +26,7 @@ const frameIn = [
         path: 'page1',
         name: 'page1',
         meta: {
-          title: '页面 1',
+          title: '员工管理',
           auth: true
         },
         component: _import('demo/page1')
@@ -35,7 +35,7 @@ const frameIn = [
         path: 'page2',
         name: 'page2',
         meta: {
-          title: '页面 2',
+          title: '产品分类管理',
           auth: true
         },
         component: _import('demo/page2')
@@ -44,10 +44,19 @@ const frameIn = [
         path: 'page3',
         name: 'page3',
         meta: {
-          title: '页面 3',
+          title: '库房管理',
           auth: true
         },
         component: _import('demo/page3')
+      },
+      {
+        path: 'page4',
+        name: 'page4',
+        meta:{
+          title: '产品管理',
+          auth: true
+        },
+        component: _import('demo/page4')
       },
       // 系统 前端日志
       {
@@ -72,6 +81,24 @@ const frameIn = [
         name: 'redirect',
         hidden: true,
         component: _import('system/function/redirect')
+      },
+      {
+        path: 'data1',
+        name: 'data1',
+        meta: {
+          title: '租借记录数据',
+          auth: true
+        },
+        component:_import('data/data1')
+      },
+      {
+      path: 'data2',
+      name: 'data2',
+      meta:{
+        title: '转借数据监控',
+        auth: true
+      },
+      component:_import('data/data2')
       }
     ]
   }

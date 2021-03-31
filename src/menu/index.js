@@ -18,12 +18,21 @@ function supplementPath (menu) {
 export const menuHeader = supplementPath([
   { path: '/index', title: '首页', icon: 'home' },
   {
-    title: '页面',
+    title: '管理类',
     icon: 'folder-o',
     children: [
       { path: '/page1', title: '员工管理' },
       { path: '/page2', title: '分类管理' },
-      { path: '/page3', title: '商品管理' }
+      { path: '/page3', title: '库房管理' },
+      { path: '/page4', title: '产品管理' },
+    ]
+  },
+  {
+    title: '数据类',
+    icon: 'folder-o',
+    children: [
+      { path: '/data1', title:'租借数据监控'},
+      { path: '/data2', title:'转借数据监控'}
     ]
   }
 ])
@@ -31,12 +40,21 @@ export const menuHeader = supplementPath([
 export const menuAside = supplementPath([
   { path: '/index', title: '首页', icon: 'home' },
   {
-    title: '页面',
+    title: '管理类',
     icon: 'folder-o',
     children: [
       { path: '/page1', title: '员工管理' },
       { path: '/page2', title: '分类管理' },
-      { path: '/page3', title: '商品管理' }
+      { path: '/page3', title: '库房管理' },
+      { path: '/page4', title: '产品管理' },
+    ]
+  },
+  {
+    title: '数据类',
+    icon: 'folder-o',
+    children: [
+      { path: '/data1', title:'租借数据监控'},
+      { path: '/data2', title:'转借数据监控'}
     ]
   }
 ])

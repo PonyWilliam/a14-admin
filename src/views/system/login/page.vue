@@ -23,10 +23,10 @@
           class="page-login--content-main"
           flex="dir:top main:center cross:center">
           <!-- logo -->
-          <img class="page-login--logo" src="./image/logo@2x.png">
+          <img class="page-login--logo" src="./image/logo.png">
           <!-- form -->
           <div class="page-login--form">
-            <el-card shadow="never">
+            <el-card shadow="never" class="login-form">
               <el-form
                 ref="loginForm"
                 label-position="top"
@@ -35,6 +35,7 @@
                 size="default">
                 <el-form-item prop="username">
                   <el-input
+                    class="formInput"
                     type="text"
                     v-model="formLogin.username"
                     placeholder="用户名">
@@ -43,6 +44,7 @@
                 </el-form-item>
                 <el-form-item prop="password">
                   <el-input
+                    class="formInput"
                     type="password"
                     v-model="formLogin.password"
                     placeholder="密码">
@@ -61,13 +63,13 @@
             <p
               class="page-login--options"
               flex="main:justify cross:center">
-              <span><d2-icon name="question-circle"/> 忘记密码</span>
-              <span>注册用户</span>
+              <!-- <span><d2-icon name="question-circle"/> 忘记密码</span>
+              <span>注册用户</span> -->
             </p>
             <!-- quick login -->
-            <el-button class="page-login--quick" size="default" type="info" @click="dialogVisible = true">
+            <!-- <el-button class="page-login--quick" size="default" type="info" @click="dialogVisible = true">
               快速选择用户（测试功能）
-            </el-button>
+            </el-button> -->
           </div>
         </div>
         <div class="page-login--content-footer">
@@ -82,15 +84,12 @@
           <p class="page-login--content-footer-copyright">
             Copyright
             <d2-icon name="copyright"/>
-            2018 D2 Projects 开源组织出品
-            <a href="https://github.com/FairyEver">
-              @FairyEver
-            </a>
+            2021 RFIDeX 团队
           </p>
           <p class="page-login--content-footer-options">
             <a href="#">帮助</a>
-            <a href="#">隐私</a>
-            <a href="#">条款</a>
+            <a href="#">设计说明</a>
+            <a href="#">关于RFIDeX</a>
           </p>
         </div>
       </div>
@@ -123,7 +122,6 @@ export default {
   data () {
     return {
       timeInterval: null,
-      time: dayjs().format('HH:mm:ss'),
       // 快速选择用户
       dialogVisible: false,
       users: [
@@ -169,9 +167,6 @@ export default {
     ...mapActions('d2admin/account', [
       'login'
     ]),
-    refreshTime () {
-      this.time = dayjs().format('HH:mm:ss')
-    },
     /**
      * @description 接收选择一个用户快速登录的事件
      * @param {Object} user 用户信息
@@ -196,7 +191,7 @@ export default {
             return
           }
           let formData = new FormData();
-          
+
           formData.append("username",this.formLogin.username)
           formData.append("password",this.formLogin.password)
 
@@ -244,7 +239,7 @@ export default {
 <style lang="scss">
 .page-login {
   @extend %unable-select;
-  $backgroundColor: #F0F2F5;
+  $backgroundColor: #d6d5d3;
   // ---
   background-color: $backgroundColor;
   height: 100%;
@@ -285,6 +280,7 @@ export default {
     width: 240px;
     margin-bottom: 2em;
     margin-top: -2em;
+    filter: grayscale(15%)
   }
   // 登录表单
   .page-login--form {
@@ -292,6 +288,15 @@ export default {
     // 卡片
     .el-card {
       margin-bottom: 15px;
+      background: rgba(255,255,255,.35);
+      backdrop-filter: blur(2px);
+      backdrop-filter: brightness(110%);
+      backdrop-filter: contrast(120%);
+      backdrop-filter: saturate(90%);
+      border-radius: 15px;
+      input{
+        background: rgba(244,244,244,.88);
+      }
     }
     // 登录按钮
     .button-login {
