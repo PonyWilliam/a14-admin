@@ -215,11 +215,12 @@ export default {
               console.log(res)
               if(res.token){
                 localStorage.setItem('token',res.token)
+                localStorage.setItem('expires',Date.parse(new Date())/1000 + 6 * 3600)//6小时刷新一次
                 loading.close()
                 this.$message.success('登陆成功，即将跳转到首页')
                 setTimeout(()=>{
                   this.$router.push('/index')
-                },2000)
+                },800)
               }else{
                 loading.close()
                 this.$message.error('登陆密码错误，请重试')

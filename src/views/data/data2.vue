@@ -122,9 +122,22 @@
              this.product[temp.id] = temp.product_name
            }
          })
+       },
+       AuthTokenExpires(){
+         if(localStorage.getItem("expires")==undefined || localStorage.getItem("expires") < Date.parse(new Date()/1000)){
+           localStorage.removeItem("token")
+           localStorage.removeItem("expires")
+           this.$alert('token已过期，需要重新登陆','token过期了',{
+               confirmButtonText:'确定',
+               callback:_=>{
+                 this.$router.push('/login')
+               }
+           })
+         }
        }
     },
     mounted() {
+      this.AuthTokenExpires()
       this.updateData()
       this.getWorker()
       this.getProduct()

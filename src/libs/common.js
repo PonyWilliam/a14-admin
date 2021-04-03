@@ -1,4 +1,6 @@
 import config from './config'
+import Vue from 'vue'
+import router from '@/router'
 const common = {
     PostWorkData:function (url,obj){
         if(obj!=undefined){
@@ -156,7 +158,21 @@ const common = {
             })
         })
     },
-    
+    ExpToken:function(data){
+        //token失效解决
+        if(data.code && data.code != 500 && data.code != 200){
+          //验证token失效
+          let temp = new Vue({})
+          temp.$alert('token已失效，请重新登陆','token已失效',{
+            confirmButtonText:'确认',
+            callback:_=>{
+              localStorage.clear()//删除现有token
+              router.push('/login')//回到登陆界面
+            }
+          })
+          return
+        }
+    }
 }
 
 export default common

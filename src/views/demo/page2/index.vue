@@ -213,38 +213,22 @@
           this.tableData = data.data.category
           this.pageForm.total = this.tableData.length
         })
+      },
+      AuthTokenExpires(){
+        if(localStorage.getItem("expires")==undefined || localStorage.getItem("expires") < Date.parse(new Date()/1000)){
+          localStorage.removeItem("token")
+          localStorage.removeItem("expires")
+          this.$alert('token已过期，需要重新登陆','token过期了',{
+              confirmButtonText:'确定',
+              callback:_=>{
+                this.$router.push('/login')
+              }
+          })
+        }
       }
     },
     mounted(){
-        //权限验证(增加服务器负担，暂时不用)
-        /*
-        let token = localStorage.getItem('token')
-        if (token == undefined){
-          this.$message.error('您没有权限访问当前页面')
-          setTimeout(()=>{
-            localStorage.clear()
-            this.$router.push('/login')
-          },1500)
-        }
-        Authorization(token).then(res=>res.json()).catch(err=>{
-          this.$message.error('您无权访问当前页面')
-          setTimeout(()=>{
-            localStorage.clear()
-            this.$router.push('/login')
-          },1500)
-          return
-        }).then(data=>{
-
-          if(data.code != 200){
-            this.$message.error(data.msg)
-            setTimeout(()=>{
-              localStorage.clear()
-              this.$router.push('/login')
-            },1500)
-          }
-        })
-        */
-
+        this.AuthTokenExpires()
         //获取数据
         this.UpdateData()
     },

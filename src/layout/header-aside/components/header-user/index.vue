@@ -26,10 +26,10 @@ export default {
      * @description 登出
      */
     logOff () {
-      localStorage.clear()
       this.logout({
         confirm: true
       })
+      
     }
   }
 }

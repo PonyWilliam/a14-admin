@@ -13,10 +13,14 @@ import store from '@/store/index'
 import router from './router'
 import { menuHeader, menuAside } from '@/menu'
 import { frameInRoutes } from '@/router/routes'
+// 表格导出插件
+import pluginExport from '@d2-projects/vue-table-export'
 
-// 核心插件
+import VCharts from 'v-charts'
+Vue.use(pluginExport)
 Vue.use(d2Admin)
 Vue.use(UmyUi)
+Vue.use(VCharts)
 
 new Vue({
   router,

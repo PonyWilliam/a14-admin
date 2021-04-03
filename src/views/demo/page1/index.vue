@@ -41,6 +41,16 @@
         <el-form-item label="描述" :label-width="formLabelWidth" prop="description">
           <el-input v-model="form.description" autocomplete="off"></el-input>
         </el-form-item>
+        <el-form-item label="照片" :label-width="formLabelWidth">
+          <el-upload
+            class="avatar-uploader"
+            action=""
+            :show-file-list="false"
+            :before-upload="beforeAvatarUpload">
+            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <div class="demo-drawer__footer">
         <el-button @click="cancelForm">取 消</el-button>
@@ -52,6 +62,7 @@
     <div class="methods">
       <!--操作-->
       <el-button type="primary" @click="dialog = true">添加员工</el-button>
+      <el-button type="primary" @click="excel">导出员工</el-button>
     </div>
     <u-table
     :data="tableData"
@@ -120,6 +131,29 @@
   </d2-container>
 </template>
 <style>
+    .avatar-uploader .el-upload {
+      border: 1px dashed #d9d9d9;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .avatar-uploader .el-upload:hover {
+      border-color: #409EFF;
+    }
+    .avatar-uploader-icon {
+      font-size: 80px;
+      color: #8c939d;
+      width: 80px;
+      height: 80px;
+      line-height: 80px;
+      text-align: center;
+    }
+    .avatar {
+      width: 80px;
+      height: 80px;
+      display: block;
+    }
   .methods{
     margin-bottom: 20px;
   }
@@ -127,13 +161,56 @@
 <script>
   import config from '@/libs/config.js'
   import common from '@/libs/common.js'
+  let OSS = require('ali-oss')
+  let client
   export default {
     data() {
       return {
+        columns:[
+          {
+            label:'ID',
+            prop:'ID'
+          },
+          {
+            label:'姓名',
+            prop:'Name'
+          },
+          {
+            label:'工号',
+            prop:'Nums'
+          },
+          {
+            label:'级别',
+            prop:'Level'
+          },
+          {
+            label:'性别',
+            prop:'Sex'
+          },
+          {
+            label:'信誉分',
+            prop:'Score'
+          },
+          {
+            label:'地址',
+            prop:'Place'
+          },
+          {
+            label:'电话',
+            prop:'Telephone'
+          },
+          {
+            label:'描述信息',
+            prop:'Description'
+          }
+        ],
+        imageUrl: '',
         dialog:false,
         loading:false,
         formLabelWidth:'80px',
         tableData: [],
+        client:{},
+        file:null,
         form:{
           name:null,
           level:null,
@@ -146,7 +223,7 @@
           username:'',
           password:'',
           mail:'',
-          iswork:'true'
+          iswork:'true',
         },
         rules:{
           name:[
@@ -188,9 +265,17 @@
       }
     },
     methods: {
+      excel(){
+          this.$export.excel({
+            columns:this.columns,
+            data:this.tableData,
+          })
+      },
       handleClick(row) {
         this.$confirm(`确认删除id为${row.ID}\n名为${row.Name}的员工吗？该操作不可撤销哦`).then(_=>{
-          //发送删除申请
+          //1. 发送删除申请
+          //2. 删除oss图片
+          this.delObject(row.Nums)
           common.DeleteWorker(row.ID).then(res=>res.json()).catch(err=>{
             this.$message.error("未能删除数据")
             return
@@ -226,6 +311,12 @@
       submit(formName){
         this.$refs[formName].validate((valid)=>{
           if(valid){
+            if(this.file == null){
+              //没有上传头像
+              this.$message.error('必须上传头像方便人脸对比哦')
+              return
+            }
+            this.putObject(this.file)
             this.loading = true
             common.PostWorkData("worker",this.form).then(data=>data.json()).catch(err=>{
               console.log(err)
@@ -264,10 +355,11 @@
       },
       UpdateData(){
         common.GetWorkData("workers").then(res=>res.json()).catch(err=>console.log(err)).then(data=>{
-          if(data == undefined){
+          if(data === undefined){
             this.$message.error('未知错误，请稍后重试')
             return
           }
+          common.ExpToken(data)
           if(data.data.workers==undefined){
             this.$message.error(`无法读取到员工信息,原因:${data.msg}`)
             return
@@ -276,39 +368,91 @@
           this.tableData = data.data.workers
           this.pageForm.total = this.tableData.length
         })
+      },
+      AuthTokenExpires(){
+        if(localStorage.getItem("expires")==undefined || localStorage.getItem("expires") < Date.parse(new Date())/1000){
+          localStorage.removeItem("token")
+          localStorage.removeItem("expires")
+          this.$alert('token已过期，需要重新登陆','token过期了',{
+              confirmButtonText:'确定',
+              callback:_=>{
+                this.$router.push('/login')
+              }
+          })
+        }
+      },
+      getKey(){
+          let time = Date.parse(new Date() / 1000)
+          if(localStorage.getItem("Credentials")==undefined || localStorage.getItem("expiresTime") < time){
+              //已过期或没有设置Credentials
+              //fetch key
+              common.GetWorkData("").then(res=>res.json()).catch(err=>{
+                console.log(err)
+                this.$message.error("获取ali os 密钥出错")
+                return
+              }).then(res=>{
+                console.log(res)
+                localStorage.setItem("Credentials",JSON.stringify(res.Credentials))
+                localStorage.setItem("expiresTime",Date.parse(res.Credentials.Expiration)/1000)//到期时间
+                console.log(JSON.parse(localStorage.getItem("Credentials")))
+                client = new OSS({
+                    region: 'oss-cn-guangzhou',
+                    accessKeyId: JSON.parse(localStorage.getItem("Credentials")).AccessKeyId,
+                    accessKeySecret: JSON.parse(localStorage.getItem("Credentials")).AccessKeySecret,
+                    bucket: 'arcsoft',
+                    stsToken: JSON.parse(localStorage.getItem("Credentials")).SecurityToken
+                })
+              })
+              return //不执行下面的
+          }
+          //否则直接使用就可以了
+          console.log(JSON.parse(localStorage.getItem("Credentials")))
+          client = new OSS({
+              region: 'oss-cn-guangzhou',
+              accessKeyId: JSON.parse(localStorage.getItem("Credentials")).AccessKeyId,
+              accessKeySecret: JSON.parse(localStorage.getItem("Credentials")).AccessKeySecret,
+              bucket: 'arcsoft',
+              stsToken: JSON.parse(localStorage.getItem("Credentials")).SecurityToken
+          })
+      },
+      async putObject (file) {
+        try {
+          let result = await client.put(`/face/${this.form.nums}.png`, file);
+          console.log(result);
+        } catch (e) {
+          console.log(e);
+        }
+      },
+      async delObject (nums){
+         //删除对应的工号
+         try{
+           let result = await client.delete(`/face/${nums}.png`)
+           console.log(result)
+         } catch(e) {
+           console.log(e)
+         }
+      },
+      beforeAvatarUpload(file) {
+        const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        console.log(file)
+        if (!isJPG) {
+          this.$message.error('人脸暂时只支持jpg和png格式哦');
+        }
+        if (!isLt2M) {
+          this.$message.error('上传图片的大小不能超过2M');
+        }
+        if(isJPG && isLt2M){
+          this.imageUrl = URL.createObjectURL(file);
+          this.file = file
+        }
+        return isJPG && isLt2M;
       }
     },
     mounted(){
-        //权限验证(增加服务器负担，暂时不用)
-        /*
-        let token = localStorage.getItem('token')
-        if (token == undefined){
-          this.$message.error('您没有权限访问当前页面')
-          setTimeout(()=>{
-            localStorage.clear()
-            this.$router.push('/login')
-          },1500)
-        }
-        Authorization(token).then(res=>res.json()).catch(err=>{
-          this.$message.error('您无权访问当前页面')
-          setTimeout(()=>{
-            localStorage.clear()
-            this.$router.push('/login')
-          },1500)
-          return
-        }).then(data=>{
-
-          if(data.code != 200){
-            this.$message.error(data.msg)
-            setTimeout(()=>{
-              localStorage.clear()
-              this.$router.push('/login')
-            },1500)
-          }
-        })
-        */
-
-        //获取数据
+        //验证权限
+        this.AuthTokenExpires()
+        this.getKey()
         this.UpdateData()
     },
   }
