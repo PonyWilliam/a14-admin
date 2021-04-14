@@ -61,7 +61,7 @@
     <template slot="header">员工管理</template>
     <div class="methods">
       <!--操作-->
-      <el-button type="primary" @click="dialog = true">添加员工</el-button>
+      <el-button type="primary" @click="addWorker">添加员工</el-button>
       <el-button type="primary" @click="excel">导出员工</el-button>
     </div>
     <u-table
@@ -115,6 +115,11 @@
       min-width="120">
     </u-table-column>
     <u-table-column
+      prop="Mail"
+      label="邮箱"
+      min-width="120">
+    </u-table-column>
+    <u-table-column
       prop="Description"
       label="描述"
       min-width="120">
@@ -124,7 +129,8 @@
       label="操作"
       width="150">
       <template slot-scope="scope">
-        <el-button @click="handleClick(scope.row)" type="text">删除</el-button>
+        <el-button @click="handleClick(scope.row,1)" type="text">编辑</el-button>
+        <el-button @click="handleClick(scope.row,2)" type="text">删除</el-button>
       </template>
     </u-table-column>
   </u-table>
@@ -200,7 +206,11 @@
             prop:'Telephone'
           },
           {
-            label:'描述信息',
+            label:'邮箱',
+            prop:'Mail',
+          },
+          {
+            label:'描述',
             prop:'Description'
           }
         ],
@@ -211,6 +221,7 @@
         tableData: [],
         client:{},
         file:null,
+        add:true,
         form:{
           name:null,
           level:null,
@@ -224,6 +235,8 @@
           password:'',
           mail:'',
           iswork:'true',
+          id:null,
+          dataMethod:0//默认增加功能
         },
         rules:{
           name:[
@@ -244,7 +257,7 @@
           nums:[
             {required:true,message:'请输入正确的工号',trigger:'change'}
           ],
-          mail:[
+        mail:[
             {required:true,message:'请输入电子邮箱',trigger:'change'}
           ],
           username:[
@@ -265,35 +278,62 @@
       }
     },
     methods: {
+      addWorker(){
+          if(!this.add){
+            //上次不是add，清空edit数据
+            this.add = true
+            for(let x in this.form){
+                this.form[x] = null
+            }
+          }
+          this.dialog = true
+          this.dataMethod = 0
+      },
       excel(){
           this.$export.excel({
             columns:this.columns,
             data:this.tableData,
           })
       },
-      handleClick(row) {
-        this.$confirm(`确认删除id为${row.ID}\n名为${row.Name}的员工吗？该操作不可撤销哦`).then(_=>{
-          //1. 发送删除申请
-          //2. 删除oss图片
-          this.delObject(row.Nums)
-          common.DeleteWorker(row.ID).then(res=>res.json()).catch(err=>{
-            this.$message.error("未能删除数据")
-            return
-          }).then(res=>{
-            if(res==undefined){
-              this.$message.error("未知错误，请稍后重试")
-              return
-            }
-            if(res.code !=200){
-              this.$message.error(res.msg)
-              return
-            }
-            this.$message.success("成功删除")
-            this.UpdateData()
-          })
-        }).catch(_=>{
-          //啥都不用做
-        })
+      handleClick(row,method) {
+        if(method == 1){
+            this.add = false//下一次add要删除所有数据
+            this.form.name = row.Name
+            this.form.id = row.ID
+            this.form.nums = row.Nums
+            this.form.level = row.Level
+            this.form.sex = row.Sex
+            this.form.score = row.Score
+            this.form.place = row.Place
+            this.form.telephone = row.Telephone
+            this.form.description = row.Description
+            this.form.mail = row.Mail
+            this.dialog = true
+            this.dataMethod = 1
+        }else{
+            this.$confirm(`确认删除id为${row.ID}\n名为${row.Name}的员工吗？该操作不可撤销哦`).then(_=>{
+              //1. 发送删除申请
+              //2. 删除oss图片
+              this.delObject(row.Nums)
+              common.DeleteWorker(row.ID).then(res=>res.json()).catch(err=>{
+                this.$message.error("未能删除数据")
+                return
+              }).then(res=>{
+                if(res==undefined){
+                  this.$message.error("未知错误，请稍后重试")
+                  return
+                }
+                if(res.code !=200){
+                  this.$message.error(res.msg)
+                  return
+                }
+                this.$message.success("成功删除")
+                this.UpdateData()
+              })
+            }).catch(_=>{
+              //啥都不用做
+            })
+        }
       },
       handleClose(done) {
         this.$confirm('确认关闭吗')
@@ -311,14 +351,28 @@
       submit(formName){
         this.$refs[formName].validate((valid)=>{
           if(valid){
-            if(this.file == null){
-              //没有上传头像
-              this.$message.error('必须上传头像方便人脸对比哦')
-              return
+            if(this.dataMethod==0){
+                if(this.file == null){
+                  //没有上传头像
+                  this.$message.error('必须上传头像方便人脸对比哦')
+                  return
+                }
             }
-            this.putObject(this.file)
-            this.loading = true
-            common.PostWorkData("worker",this.form).then(data=>data.json()).catch(err=>{
+            if(this.file != null){
+                this.putObject(this.file)
+                this.loading = true
+            }
+            let message,url,method
+            if(this.dataMethod == 0){
+                message = '添加'
+                url = 'worker'
+                method = 'POST'
+            }else{
+                message = '修改'
+                url = `worker/${this.form.id}`
+                method = 'PUT'
+            }
+            common.PostWorkData(url,this.form,method).then(data=>data.json()).catch(err=>{
               console.log(err)
               this.$message.error('提交时出错，请稍后重试')
               setTimeout(()=>{
@@ -328,10 +382,11 @@
               return
             }).then(res=>{
               if(res.code == undefined){
-                this.$message.error('无法插入，请稍后重试')
+                this.$message.error(`无法${message}，请稍后重试`)
                 return
               }
               if(res.code!=200){
+                console.log(res)
                 this.$message.error(res.msg)
                 setTimeout(()=>{
                   this.loading = false
@@ -339,7 +394,7 @@
                 },500)
                 return
               }
-              this.$message.success("成功插入员工表")
+              this.$message.success(`成功${message}员工表`)
               this.UpdateData()
               setTimeout(()=>{
                 this.loading = false
@@ -382,7 +437,7 @@
         }
       },
       getKey(){
-          let time = Date.parse(new Date() / 1000)
+          let time = Date.parse(new Date()) / 1000
           if(localStorage.getItem("Credentials")==undefined || localStorage.getItem("expiresTime") < time){
               //已过期或没有设置Credentials
               //fetch key
@@ -417,7 +472,7 @@
       },
       async putObject (file) {
         try {
-          let result = await client.put(`/face/${this.form.nums}.png`, file);
+          let result = await client.put(`/face/${this.form.id}.png`, file);
           console.log(result);
         } catch (e) {
           console.log(e);
@@ -426,7 +481,7 @@
       async delObject (nums){
          //删除对应的工号
          try{
-           let result = await client.delete(`/face/${nums}.png`)
+           let result = await client.delete(`/face/${id}.png`)
            console.log(result)
          } catch(e) {
            console.log(e)

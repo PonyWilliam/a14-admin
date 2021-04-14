@@ -26,7 +26,7 @@
     <template slot="header">分类管理</template>
     <div class="methods">
       <!--操作-->
-      <el-button type="primary" @click="dialog = true">添加分类</el-button>
+      <el-button type="primary" @click="addCategory">添加分类</el-button>
     </div>
     <u-table
     :data="tableData"
@@ -57,7 +57,8 @@
       label="操作"
       width="150">
       <template slot-scope="scope">
-        <el-button @click="handleClick(scope.row)" type="text">删除</el-button>
+        <el-button @click="handleClick(scope.row,1)" type="text">编辑</el-button>
+        <el-button @click="handleClick(scope.row,2)" type="text">删除</el-button>
       </template>
     </u-table-column>
   </u-table>
@@ -78,7 +79,11 @@
         loading:false,
         formLabelWidth:'80px',
         tableData: [],
+        methodData:0,
+        add:true,
+        dataMethod:0,
         form:{
+          id:null,
           name:null,
           description:null
         },
@@ -98,7 +103,28 @@
       }
     },
     methods: {
-      handleClick(row) {
+      addCategory(){
+          if(!this.add){
+            //上次不是add，清空edit数据
+            this.add = true
+            for(let x in this.form){
+                this.form[x] = null
+            }
+          }
+          this.dialog = true
+          this.dataMethod = 0
+      },
+      handleClick(row,method) {
+        if(method == 1){
+            //编辑功能
+            this.add = false
+            this.dialog = true
+            this.dataMethod = 1
+            this.form.id = row.category_id
+            this.form.name = row.category_name
+            this.form.description = row.category_description
+            return
+        }
         this.$confirm(`确认删除id为${row.category_id}\n名为${row.category_name}的分类吗？该操作不可撤销哦`).then(_=>{
           //删除前检测对应分类是否有商品
           fetch(config.url + config.product + "bycategory/" + row.category_id,{
@@ -164,7 +190,18 @@
         this.$refs[formName].validate((valid)=>{
           if(valid){
             this.loading = true
-            common.PostCategoryData("",this.form).then(data=>data.json()).catch(err=>{
+            let message,url,method
+            if(this.dataMethod == 0){
+                message = '添加'
+                url = ''
+                method = 'POST'
+            }else{
+                message = '修改'
+                url = `${this.form.id}`
+                method = 'PUT'
+            }
+            this.loading = true
+            common.PostCategoryData(url,this.form,method).then(data=>data.json()).catch(err=>{
               console.log(err)
               this.$message.error('提交时出错，请稍后重试')
               setTimeout(()=>{
@@ -174,7 +211,7 @@
               return
             }).then(res=>{
               if(res.code == undefined){
-                this.$message.error('无法插入，请稍后重试')
+                this.$message.error(`无法${message}，请稍后重试`)
                 return
               }
               if(res.code!=200){
@@ -185,7 +222,7 @@
                 },500)
                 return
               }
-              this.$message.success("成功插入分类表")
+              this.$message.success(`成功${message}分类表`)
               this.UpdateData()
               setTimeout(()=>{
                 this.loading = false

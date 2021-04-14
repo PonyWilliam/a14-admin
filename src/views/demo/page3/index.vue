@@ -57,7 +57,8 @@
       label="操作"
       width="150">
       <template slot-scope="scope">
-        <el-button @click="handleClick(scope.row)" type="text">删除</el-button>
+        <el-button @click="handleClick(scope.row,1)" type="text">编辑</el-button>
+        <el-button @click="handleClick(scope.row,2)" type="text">删除</el-button>
       </template>
     </u-table-column>
   </u-table>
@@ -78,7 +79,10 @@
         loading:false,
         formLabelWidth:'80px',
         tableData: [],
+        add:true,
+        Datamethod:0,
         form:{
+          id:null,
           name:null,
           description:null
         },
@@ -98,7 +102,28 @@
       }
     },
     methods: {
-      handleClick(row) {
+      addArea(){
+          if(!this.add){
+            //上次不是add，清空edit数据
+            for(let x in this.form){
+                this.form[x] = null
+            }
+            this.add = true
+          }
+          this.dialog = true
+          this.Datamethod = 0
+      },
+      handleClick(row,method) {
+        if(method == 1){
+          //编辑
+          this.form.id = row.id
+          this.form.name = row.name
+          this.form.description = row.description
+          this.Datamethod = 1
+          this.add = false
+          this.dialog = true
+          return
+        }
         this.$confirm(`确认删除id为${row.id}\n名为${row.name}的库房吗？该操作不可撤销哦`).then(_=>{
           //删除前检测对应分类是否有商品
           fetch(config.url + config.product + "area/" + row.id,{
@@ -163,8 +188,18 @@
       submit(formName){
         this.$refs[formName].validate((valid)=>{
           if(valid){
+            let message,url,method
+            if(this.Datamethod == 0){
+                message = '添加'
+                url = ''
+                method = 'POST'
+            }else{
+                message = '修改'
+                url = `${this.form.id}`
+                method = 'PUT'
+            }
             this.loading = true
-            common.PostAreaData("",this.form).then(data=>data.json()).catch(err=>{
+            common.PostAreaData(url,this.form,method).then(data=>data.json()).catch(err=>{
               console.log(err)
               this.$message.error('提交时出错，请稍后重试')
               setTimeout(()=>{
@@ -174,7 +209,7 @@
               return
             }).then(res=>{
               if(res.code == undefined){
-                this.$message.error('无法插入，请稍后重试')
+                this.$message.error(`无法${message}，请稍后重试`)
                 return
               }
               if(res.code!=200){
@@ -185,7 +220,7 @@
                 },500)
                 return
               }
-              this.$message.success("成功插入分类表")
+              this.$message.success(`成功${message}分类表`)
               this.UpdateData()
               setTimeout(()=>{
                 this.loading = false

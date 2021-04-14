@@ -2,14 +2,14 @@ import config from './config'
 import Vue from 'vue'
 import router from '@/router'
 const common = {
-    PostWorkData:function (url,obj){
+    PostWorkData:function (url,obj,method='POST'){
         if(obj!=undefined){
             let data = new FormData()
             for(let key in obj){
                 data.append(key,obj[key])
             }
             return fetch(config.url + config.work + url,{
-                method:"POST",
+                method:method,
                 headers:new Headers({
                     "Authorization":localStorage.getItem('token')
                 }),
@@ -17,20 +17,20 @@ const common = {
             })
         }
         return fetch(config.url + config.work + url,{
-            method:"POST",
+            method:method,
             headers:new Headers({
                 "Authorization":localStorage.getItem('token')
             })
         })
     },
-    PostCategoryData:function (url,obj){
+    PostCategoryData:function (url,obj,method='POST'){
         if(obj!=undefined){
             let data = new FormData()
             for(let key in obj){
                 data.append(key,obj[key])
             }
             return fetch(config.url + config.category + url,{
-                method:"POST",
+                method:method,
                 headers:new Headers({
                     "Authorization":localStorage.getItem('token')
                 }),
@@ -38,20 +38,20 @@ const common = {
             })
         }
         return fetch(config.url + config.category + url,{
-            method:"POST",
+            method:method,
             headers:new Headers({
                 "Authorization":localStorage.getItem('token')
             })
         })
     },
-    PostProductData:function (url,obj){
+    PostProductData:function (url,obj,method='POST'){
         if(obj!=undefined){
             let data = new FormData()
             for(let key in obj){
                 data.append(key,obj[key])
             }
             return fetch(config.url + config.product + url,{
-                method:"POST",
+                method:method,
                 headers:new Headers({
                     "Authorization":localStorage.getItem('token')
                 }),
@@ -59,20 +59,20 @@ const common = {
             })
         }
         return fetch(config.url + config.product + url,{
-            method:"POST",
+            method:method,
             headers:new Headers({
                 "Authorization":localStorage.getItem('token')
             })
         })
     },
-    PostAreaData:function (url,obj){
+    PostAreaData:function (url,obj,method='POST'){
             if(obj!=undefined){
                 let data = new FormData()
                 for(let key in obj){
                     data.append(key,obj[key])
                 }
                 return fetch(config.url + config.area + url,{
-                    method:"POST",
+                    method:method,
                     headers:new Headers({
                         "Authorization":localStorage.getItem('token')
                     }),
