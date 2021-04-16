@@ -222,6 +222,7 @@
         client:{},
         file:null,
         add:true,
+        id:null,
         form:{
           name:null,
           level:null,
@@ -236,7 +237,7 @@
           mail:'',
           iswork:'true',
           id:null,
-          dataMethod:0//默认增加功能
+          dataMethod:0,//默认增加功能
         },
         rules:{
           name:[
@@ -358,10 +359,6 @@
                   return
                 }
             }
-            if(this.file != null){
-                this.putObject(this.file)
-                this.loading = true
-            }
             let message,url,method
             if(this.dataMethod == 0){
                 message = '添加'
@@ -396,6 +393,16 @@
               }
               this.$message.success(`成功${message}员工表`)
               this.UpdateData()
+              if(this.file != null){
+                  if(this.dataMethod == 0){
+                      //添加，获取data就可以了
+                      this.id = res.data
+                  }else{
+                      this.id = this.form.id
+                  }
+                  this.putObject(this.file)
+                  this.loading = true
+              }
               setTimeout(()=>{
                 this.loading = false
                 this.dialog = false
@@ -472,7 +479,7 @@
       },
       async putObject (file) {
         try {
-          let result = await client.put(`/face/${this.form.id}.png`, file);
+          let result = await client.put(`/face/${this.id}.png`, file);
           console.log(result);
         } catch (e) {
           console.log(e);
